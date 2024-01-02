@@ -27,7 +27,7 @@ func (c *Page[T]) SelectPages(pager *GormPager, query *gorm.DB) error {
 }
 
 // SelectPagesRow is used when you have a raw sql and you want to paginate that result
-func (c *Page[T]) SelectPagesRow(pager *GormPager, countRawQuery, rawQuery *GormPager) error {
+func (c *Page[T]) SelectPagesRow(pager *GormPager, countRawQuery, rawQuery *gorm.DB) error {
 	countRawQuery.Scan(&c.TotalEntries)
 	c.checkPageSizeLimits(pager.options.PageSizeLowerLimit, pager.options.PageSizeUpperLimit)
 	c.setTotalPages()
