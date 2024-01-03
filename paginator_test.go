@@ -1,45 +1,41 @@
 package gormpager_test
 
 import (
-	"log"
-	"os"
 	"testing"
 
+	"github.com/bxcodec/faker/v3"
 	"github.com/manicar2093/gormpager"
 
-	"github.com/bxcodec/faker/v3"
-	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
-type TestingModel struct {
-	gorm.Model
-	Name   string `json:"name,omitempty"`
-	Age    uint   `json:"age,omitempty"`
-	Hobbie string `json:"hobbies,omitempty"`
-	UserID uint
-}
-
-func SliceGenerator[T any](count int, generator func() T) []T {
-	res := []T{}
-	for i := 0; i < count; i++ {
-		res = append(res, generator())
-	}
-	return res
-}
-
-func TestPaginator(t *testing.T) {
-
-	db, err := gorm.Open(postgres.Open(os.Getenv("TEST_DB_DNS")))
-	if err != nil {
-		log.Panicln(err)
-	}
-	if err := db.AutoMigrate(&TestingModel{}); err != nil {
-		t.Error(err)
-		t.FailNow()
+type (
+	TestingModel struct {
+		gorm.Model
+		Name   string `json:"name,omitempty"`
+		Age    uint   `json:"age,omitempty"`
+		Hobbie string `json:"hobbies,omitempty"`
+		UserID uint
 	}
 
-	pager := gormpager.WrapGormDB(db)
+	testingExpects[T any] struct {
+		expectedTotalEntries int64
+		expectedPageSize     int64
+		expectedLenData      int64
+		expectedTotalPages   int64
+		expectedCurrentPage  int64
+		expectedNextPage     int64
+		expectedHasNextPage  bool
+		expectedUserId       int64
+	}
+)
+
+func TestWrapGormDB(t *testing.T) {
+
+	var (
+		db    = getDbConnection(t)
+		pager = gormpager.WrapGormDB(db)
+	)
 
 	t.Cleanup(func() {
 		db.Exec("TRUNCATE TABLE testing_models")
@@ -47,181 +43,235 @@ func TestPaginator(t *testing.T) {
 
 	t.Run("creates a new page", func(t *testing.T) {
 		var (
-			expectedTotalEntries int64 = 44
-			savedData2                 = SliceGenerator(int(expectedTotalEntries), func() *TestingModel {
+			testExpectations = testingExpects[TestingModel]{
+				expectedTotalEntries: 44,
+				expectedPageSize:     15,
+				expectedLenData:      15,
+				expectedTotalPages:   3,
+				expectedCurrentPage:  1,
+				expectedNextPage:     2,
+				expectedHasNextPage:  true,
+				expectedUserId:       1,
+			}
+			savedData = sliceGenerator(int(testExpectations.expectedTotalEntries), func() *TestingModel {
 				return &TestingModel{
 					Name:   faker.Name(),
 					Age:    uint(faker.RandomUnixTime()),
 					Hobbie: faker.Name(),
-					UserID: 2,
+					UserID: uint(testExpectations.expectedUserId),
 				}
 			})
-			expectedPageSize    int64 = 15
-			expectedLenData     int64 = expectedPageSize
-			expectedTotalPages  int64 = 3
-			expectedCurrentPage int64 = 1
-			expectedNextPage    int64 = 2
-			expectedHasNextPage bool  = true
-			expectedPage              = gormpager.Page[TestingModel]{
-				PageSize:    expectedPageSize,
-				CurrentPage: expectedCurrentPage,
+			expectedPage = gormpager.Page[TestingModel]{
+				PageSize:    testExpectations.expectedPageSize,
+				CurrentPage: testExpectations.expectedCurrentPage,
 			}
 		)
-		db.Create(&savedData2)
+		db.Create(&savedData)
 
-		if err := expectedPage.SelectPages(pager, db.Where("user_id = 2")); err != nil {
+		if err := expectedPage.SelectPages(pager, db.Where("user_id = ?", testExpectations.expectedUserId)); err != nil {
 			t.Error(err)
 			t.FailNow()
 		}
 
-		if expectedPage.CurrentPage != expectedCurrentPage {
-			t.Log("unexpected current page", expectedPage.CurrentPage)
-			t.FailNow()
-		}
-		if expectedPage.TotalEntries != expectedTotalEntries {
-			t.Log("unexpected total entries", expectedPage.TotalEntries)
-			t.FailNow()
-		}
-		if expectedPage.PageSize != expectedPageSize {
-			t.Log("unexpected page size", expectedPage.PageSize)
-			t.FailNow()
-		}
-		if len(expectedPage.Data) != int(expectedLenData) {
-			t.Log("unexpected data len", len(expectedPage.Data))
-			t.FailNow()
-		}
-		if expectedPage.NextPage != expectedNextPage {
-			t.Log("unexpected next page", expectedPage.NextPage)
-			t.FailNow()
-		}
-		if expectedPage.HasNextPage() != expectedHasNextPage {
-			t.Log("unexpected has next page", expectedPage.HasNextPage())
-			t.FailNow()
-		}
-		if expectedPage.TotalPages != expectedTotalPages {
-			t.Log("unexpected total pages", expectedPage.TotalPages)
-			t.FailNow()
-		}
-		if expectedPage.EntriesCount != expectedLenData {
-			t.Log("unexpected entries count", expectedPage.EntriesCount)
-			t.FailNow()
-		}
+		validator(t, expectedPage, testExpectations)
 	})
 
 	t.Run("when there is a single page with few entries", func(t *testing.T) {
 		var (
-			expectedTotalEntries int64 = 2
-			savedData2                 = SliceGenerator(int(expectedTotalEntries), func() *TestingModel {
+			testExpectations = testingExpects[TestingModel]{
+				expectedTotalEntries: 2,
+				expectedPageSize:     15,
+				expectedLenData:      2,
+				expectedTotalPages:   1,
+				expectedCurrentPage:  1,
+				expectedNextPage:     1,
+				expectedHasNextPage:  false,
+				expectedUserId:       2,
+			}
+			savedData = sliceGenerator(int(testExpectations.expectedTotalEntries), func() *TestingModel {
 				return &TestingModel{
 					Name:   faker.Name(),
 					Age:    uint(faker.RandomUnixTime()),
 					Hobbie: faker.Name(),
-					UserID: 3,
+					UserID: uint(testExpectations.expectedUserId),
 				}
 			})
-			expectedPageSize    int64 = 15
-			expectedLenData     int64 = 2
-			expectedTotalPages  int64 = 1
-			expectedCurrentPage int64 = 1
-			expectedNextPage    int64 = 1
-			expectedHasNextPage bool  = false
-			expectedPage              = gormpager.Page[TestingModel]{
-				PageSize:    expectedPageSize,
-				CurrentPage: expectedCurrentPage,
+
+			expectedPage = gormpager.Page[TestingModel]{
+				PageSize:    testExpectations.expectedPageSize,
+				CurrentPage: testExpectations.expectedCurrentPage,
 			}
 		)
-		db.Create(&savedData2)
+		db.Create(&savedData)
 
-		if err := expectedPage.SelectPages(pager, db.Where("user_id = 3")); err != nil {
+		if err := expectedPage.SelectPages(pager, db.Where("user_id = ?", testExpectations.expectedUserId)); err != nil {
 			t.Error(err)
 			t.FailNow()
 		}
 
-		if expectedPage.CurrentPage != expectedCurrentPage {
-			t.Log("unexpected current page", expectedPage.CurrentPage)
-			t.FailNow()
-		}
-		if expectedPage.TotalEntries != expectedTotalEntries {
-			t.Log("unexpected total entries", expectedPage.TotalEntries)
-			t.FailNow()
-		}
-		if expectedPage.PageSize != expectedPageSize {
-			t.Log("unexpected page size", expectedPage.PageSize)
-			t.FailNow()
-		}
-		if len(expectedPage.Data) != int(expectedLenData) {
-			t.Log("unexpected data len", len(expectedPage.Data))
-			t.FailNow()
-		}
-		if expectedPage.NextPage != expectedNextPage {
-			t.Log("unexpected next page", expectedPage.NextPage)
-			t.FailNow()
-		}
-		if expectedPage.HasNextPage() != expectedHasNextPage {
-			t.Log("unexpected has next page", expectedPage.HasNextPage())
-			t.FailNow()
-		}
-		if expectedPage.TotalPages != expectedTotalPages {
-			t.Log("unexpected total pages", expectedPage.TotalPages)
-			t.FailNow()
-		}
-		if expectedPage.EntriesCount != expectedLenData {
-			t.Log("unexpected entries count", expectedPage.EntriesCount)
-			t.FailNow()
-		}
+		validator(t, expectedPage, testExpectations)
 	})
 
 	t.Run("when first page has nothing", func(t *testing.T) {
 		var (
-			expectedTotalEntries int64 = 0
-			expectedPageSize     int64 = 10
-			expectedLenData      int64 = 0
-			expectedTotalPages   int64 = 1
-			expectedCurrentPage  int64 = 1
-			expectedNextPage     int64 = 1
-			expectedHasNextPage  bool  = false
-			expectedPage               = gormpager.Page[TestingModel]{
-				PageSize:    expectedPageSize,
-				CurrentPage: expectedCurrentPage,
+			testExpectations = testingExpects[TestingModel]{
+				expectedTotalEntries: 0,
+				expectedPageSize:     10,
+				expectedLenData:      0,
+				expectedTotalPages:   1,
+				expectedCurrentPage:  1,
+				expectedNextPage:     1,
+				expectedHasNextPage:  false,
+				expectedUserId:       3,
+			}
+			expectedPage = gormpager.Page[TestingModel]{
+				PageSize:    testExpectations.expectedPageSize,
+				CurrentPage: testExpectations.expectedCurrentPage,
 			}
 		)
 
-		if err := expectedPage.SelectPages(pager, db.Where("user_id = 4")); err != nil {
+		if err := expectedPage.SelectPages(pager, db.Where("user_id = ?", testExpectations.expectedUserId)); err != nil {
 			t.Error(err)
 			t.FailNow()
 		}
 
-		if expectedPage.CurrentPage != expectedCurrentPage {
-			t.Log("unexpected current page", expectedPage.CurrentPage)
+	})
+
+	t.Run("when there is a single page with few entries", func(t *testing.T) {
+		var (
+			testExpectations = testingExpects[TestingModel]{
+				expectedTotalEntries: 2,
+				expectedPageSize:     15,
+				expectedLenData:      2,
+				expectedTotalPages:   1,
+				expectedCurrentPage:  1,
+				expectedNextPage:     1,
+				expectedHasNextPage:  false,
+				expectedUserId:       4,
+			}
+			savedData = sliceGenerator(int(testExpectations.expectedTotalEntries), func() *TestingModel {
+				return &TestingModel{
+					Name:   faker.Name(),
+					Age:    uint(faker.RandomUnixTime()),
+					Hobbie: faker.Name(),
+					UserID: 4,
+				}
+			})
+
+			expectedPage = gormpager.Page[TestingModel]{
+				PageSize:    testExpectations.expectedPageSize,
+				CurrentPage: testExpectations.expectedCurrentPage,
+			}
+		)
+		db.Create(&savedData)
+
+		if err := expectedPage.SelectPages(pager, db.Where("user_id = ?", testExpectations.expectedUserId)); err != nil {
+			t.Error(err)
 			t.FailNow()
 		}
-		if expectedPage.TotalEntries != expectedTotalEntries {
-			t.Log("unexpected total entries", expectedPage.TotalEntries)
+
+		validator(t, expectedPage, testExpectations)
+	})
+
+	t.Run("gets page size from page when into limits", func(t *testing.T) {
+		var (
+			testExpectations = testingExpects[TestingModel]{
+				expectedTotalEntries: 55,
+				expectedPageSize:     40,
+				expectedLenData:      40,
+				expectedTotalPages:   2,
+				expectedCurrentPage:  1,
+				expectedNextPage:     2,
+				expectedHasNextPage:  true,
+				expectedUserId:       5,
+			}
+			savedData = sliceGenerator(int(testExpectations.expectedTotalEntries), func() *TestingModel {
+				return &TestingModel{
+					Name:   faker.Name(),
+					Age:    uint(faker.RandomUnixTime()),
+					Hobbie: faker.Name(),
+					UserID: uint(testExpectations.expectedUserId),
+				}
+			})
+			expectedPage = gormpager.Page[TestingModel]{
+				PageSize:    testExpectations.expectedPageSize,
+				CurrentPage: testExpectations.expectedCurrentPage,
+			}
+		)
+		db.Create(&savedData)
+
+		if err := expectedPage.SelectPages(pager, db.Where("user_id = ?", testExpectations.expectedUserId)); err != nil {
+			t.Error(err)
 			t.FailNow()
 		}
-		if expectedPage.PageSize != expectedPageSize {
-			t.Log("unexpected page size", expectedPage.PageSize)
+
+	})
+
+	t.Run("restart page lower limit", func(t *testing.T) {
+		var (
+			testExpectations = testingExpects[TestingModel]{
+				expectedTotalEntries: 55,
+				expectedPageSize:     10,
+				expectedLenData:      40,
+				expectedTotalPages:   2,
+				expectedCurrentPage:  1,
+				expectedNextPage:     2,
+				expectedHasNextPage:  true,
+				expectedUserId:       6,
+			}
+			savedData = sliceGenerator(int(testExpectations.expectedTotalEntries), func() *TestingModel {
+				return &TestingModel{
+					Name:   faker.Name(),
+					Age:    uint(faker.RandomUnixTime()),
+					Hobbie: faker.Name(),
+					UserID: uint(testExpectations.expectedUserId),
+				}
+			})
+			expectedPage = gormpager.Page[TestingModel]{
+				PageSize:    5,
+				CurrentPage: testExpectations.expectedCurrentPage,
+			}
+		)
+		db.Create(&savedData)
+
+		if err := expectedPage.SelectPages(pager, db.Where("user_id = ?", testExpectations.expectedUserId)); err != nil {
+			t.Error(err)
 			t.FailNow()
 		}
-		if len(expectedPage.Data) != int(expectedLenData) {
-			t.Log("unexpected data len", len(expectedPage.Data))
+
+	})
+
+	t.Run("restart page upper limit", func(t *testing.T) {
+		var (
+			testExpectations = testingExpects[TestingModel]{
+				expectedTotalEntries: 55,
+				expectedPageSize:     100,
+				expectedLenData:      40,
+				expectedTotalPages:   2,
+				expectedCurrentPage:  1,
+				expectedNextPage:     2,
+				expectedHasNextPage:  true,
+				expectedUserId:       7,
+			}
+			savedData = sliceGenerator(int(testExpectations.expectedTotalEntries), func() *TestingModel {
+				return &TestingModel{
+					Name:   faker.Name(),
+					Age:    uint(faker.RandomUnixTime()),
+					Hobbie: faker.Name(),
+					UserID: uint(testExpectations.expectedUserId),
+				}
+			})
+			expectedPage = gormpager.Page[TestingModel]{
+				PageSize:    1000,
+				CurrentPage: testExpectations.expectedCurrentPage,
+			}
+		)
+		db.Create(&savedData)
+
+		if err := expectedPage.SelectPages(pager, db.Where("user_id = ?", testExpectations.expectedUserId)); err != nil {
+			t.Error(err)
 			t.FailNow()
 		}
-		if expectedPage.NextPage != expectedNextPage {
-			t.Log("unexpected next page", expectedPage.NextPage)
-			t.FailNow()
-		}
-		if expectedPage.HasNextPage() != expectedHasNextPage {
-			t.Log("unexpected has next page", expectedPage.HasNextPage())
-			t.FailNow()
-		}
-		if expectedPage.TotalPages != expectedTotalPages {
-			t.Log("unexpected total pages", expectedPage.TotalPages)
-			t.FailNow()
-		}
-		if expectedPage.EntriesCount != expectedLenData {
-			t.Log("unexpected entries count", expectedPage.EntriesCount)
-			t.FailNow()
-		}
+
 	})
 }
