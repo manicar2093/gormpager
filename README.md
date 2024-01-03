@@ -29,6 +29,15 @@ Wrap it with GormPager
 pager := gormpager.WrapGormDB(db)
 ```
 
+or
+
+```golang
+pager := gormpager.WrapGormDBWithOptions(db, gormpager.Options{
+    PageSizeUpperLimit: 1000,
+    PageSizeLowerLimit: 5,
+})
+```
+
 Start using it!
 
 ```golang
