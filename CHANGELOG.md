@@ -1,3 +1,9 @@
+## v0.2.0 (2024-01-10)
+
+### Feat
+
+- add error returns and refactor duplicated code
+
 ## v0.1.2 (2024-01-03)
 
 ### Fix

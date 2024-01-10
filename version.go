@@ -1,3 +1,3 @@
 package gormpager
 
-const Version = "0.1.2"
+const Version = "0.2.0"
