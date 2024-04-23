@@ -1,3 +1,10 @@
+## v0.3.0 (2024-04-23)
+
+### Feat
+
+- add options to default when send empty
+- add error returns and refactor duplicated code
+
 ## v0.2.0 (2024-01-10)
 
 ### Feat
