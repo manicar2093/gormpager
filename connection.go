@@ -16,13 +16,21 @@ func WrapGormDB(conn *gorm.DB) *GormPager {
 	return &GormPager{
 		DB: conn,
 		options: Options{
-			PageSizeUpperLimit: 100,
-			PageSizeLowerLimit: 10,
+			PageSizeUpperLimit: defaultUpperPageSize,
+			PageSizeLowerLimit: defaultLowerPageSize,
 		},
 	}
 }
 
 func WrapGormDBWithOptions(conn *gorm.DB, options Options) *GormPager {
+	switch {
+	case options.PageSizeLowerLimit == 0:
+		options.PageSizeLowerLimit = defaultLowerPageSize
+		fallthrough
+	case options.PageSizeUpperLimit == 0:
+		options.PageSizeUpperLimit = defaultUpperPageSize
+	}
+
 	return &GormPager{
 		DB:      conn,
 		options: options,

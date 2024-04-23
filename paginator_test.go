@@ -272,6 +272,33 @@ func TestWrapGormDB(t *testing.T) {
 			t.Error(err)
 			t.FailNow()
 		}
-
 	})
+
+	t.Run("creates a connection with deafult options when options is empty", func(t *testing.T) {
+		var (
+			pagerWithOptions = gormpager.WrapGormDBWithOptions(
+				db,
+				gormpager.Options{},
+			)
+			testExpectations = testingExpects[TestingModel]{
+				expectedTotalEntries: 44,
+				expectedPageSize:     10,
+				expectedLenData:      10,
+				expectedTotalPages:   5,
+				expectedCurrentPage:  1,
+				expectedNextPage:     2,
+				expectedHasNextPage:  true,
+				expectedUserId:       8,
+			}
+			expectedPage = createAndGenerateTestingModel(t, db, testExpectations)
+		)
+
+		if err := expectedPage.SelectPages(pagerWithOptions, db.Where("user_id = ?", testExpectations.expectedUserId)); err != nil {
+			t.Error(err)
+			t.FailNow()
+		}
+
+		validator(t, expectedPage, testExpectations)
+	})
+
 }

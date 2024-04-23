@@ -4,6 +4,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/bxcodec/faker/v3"
 	"github.com/manicar2093/gormpager"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -33,11 +34,26 @@ func getDbConnection(t *testing.T) *gorm.DB {
 func validator[T any](t *testing.T, expectedPage gormpager.Page[T], testExpectations testingExpects[T]) {
 	failer := func(message string, expectedData interface{}) {
 		t.Log(message, expectedData)
+func createAndGenerateTestingModel(t *testing.T, db *gorm.DB, testExpectations testingExpects[TestingModel]) gormpager.Page[TestingModel] {
+	savedData := sliceGenerator(int(testExpectations.expectedTotalEntries), func() *TestingModel {
+		return &TestingModel{
+			Name:   faker.Name(),
+			Age:    uint(faker.RandomUnixTime()),
+			Hobbie: faker.Name(),
+			UserID: uint(testExpectations.expectedUserId),
+		}
+	})
+
+	if res := db.Create(&savedData); res.Error != nil {
+		t.Error(res.Error)
 		t.FailNow()
 	}
 
 	if expectedPage.CurrentPage != testExpectations.expectedCurrentPage {
 		failer("unexpected current page", expectedPage.CurrentPage)
+	return gormpager.Page[TestingModel]{
+		PageSize:    testExpectations.expectedPageSize,
+		CurrentPage: testExpectations.expectedCurrentPage,
 	}
 	if expectedPage.TotalEntries != testExpectations.expectedTotalEntries {
 		failer("unexpected total entries", expectedPage.TotalEntries)
