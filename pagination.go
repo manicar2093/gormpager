@@ -46,7 +46,6 @@ func (c *Page[T]) SelectPagesRow(pager *GormPager, countRawQuery, rawQuery *gorm
 	return nil
 }
 
-// HasNextPage says if there is o
 func (c *Page[T]) HasNextPage() bool {
 	return c.CurrentPage < c.TotalPages
 }

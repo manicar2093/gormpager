@@ -3,7 +3,6 @@ package gormpager_test
 import (
 	"testing"
 
-	"github.com/bxcodec/faker/v3"
 	"github.com/manicar2093/gormpager"
 
 	"gorm.io/gorm"
@@ -53,20 +52,8 @@ func TestWrapGormDB(t *testing.T) {
 				expectedHasNextPage:  true,
 				expectedUserId:       1,
 			}
-			savedData = sliceGenerator(int(testExpectations.expectedTotalEntries), func() *TestingModel {
-				return &TestingModel{
-					Name:   faker.Name(),
-					Age:    uint(faker.RandomUnixTime()),
-					Hobbie: faker.Name(),
-					UserID: uint(testExpectations.expectedUserId),
-				}
-			})
-			expectedPage = gormpager.Page[TestingModel]{
-				PageSize:    testExpectations.expectedPageSize,
-				CurrentPage: testExpectations.expectedCurrentPage,
-			}
+			expectedPage = createAndGenerateTestingModel(t, db, testExpectations)
 		)
-		db.Create(&savedData)
 
 		if err := expectedPage.SelectPages(pager, db.Where("user_id = ?", testExpectations.expectedUserId)); err != nil {
 			t.Error(err)
@@ -88,21 +75,8 @@ func TestWrapGormDB(t *testing.T) {
 				expectedHasNextPage:  false,
 				expectedUserId:       2,
 			}
-			savedData = sliceGenerator(int(testExpectations.expectedTotalEntries), func() *TestingModel {
-				return &TestingModel{
-					Name:   faker.Name(),
-					Age:    uint(faker.RandomUnixTime()),
-					Hobbie: faker.Name(),
-					UserID: uint(testExpectations.expectedUserId),
-				}
-			})
-
-			expectedPage = gormpager.Page[TestingModel]{
-				PageSize:    testExpectations.expectedPageSize,
-				CurrentPage: testExpectations.expectedCurrentPage,
-			}
+			expectedPage = createAndGenerateTestingModel(t, db, testExpectations)
 		)
-		db.Create(&savedData)
 
 		if err := expectedPage.SelectPages(pager, db.Where("user_id = ?", testExpectations.expectedUserId)); err != nil {
 			t.Error(err)
@@ -149,21 +123,8 @@ func TestWrapGormDB(t *testing.T) {
 				expectedHasNextPage:  false,
 				expectedUserId:       4,
 			}
-			savedData = sliceGenerator(int(testExpectations.expectedTotalEntries), func() *TestingModel {
-				return &TestingModel{
-					Name:   faker.Name(),
-					Age:    uint(faker.RandomUnixTime()),
-					Hobbie: faker.Name(),
-					UserID: 4,
-				}
-			})
-
-			expectedPage = gormpager.Page[TestingModel]{
-				PageSize:    testExpectations.expectedPageSize,
-				CurrentPage: testExpectations.expectedCurrentPage,
-			}
+			expectedPage = createAndGenerateTestingModel(t, db, testExpectations)
 		)
-		db.Create(&savedData)
 
 		if err := expectedPage.SelectPages(pager, db.Where("user_id = ?", testExpectations.expectedUserId)); err != nil {
 			t.Error(err)
@@ -185,20 +146,8 @@ func TestWrapGormDB(t *testing.T) {
 				expectedHasNextPage:  true,
 				expectedUserId:       5,
 			}
-			savedData = sliceGenerator(int(testExpectations.expectedTotalEntries), func() *TestingModel {
-				return &TestingModel{
-					Name:   faker.Name(),
-					Age:    uint(faker.RandomUnixTime()),
-					Hobbie: faker.Name(),
-					UserID: uint(testExpectations.expectedUserId),
-				}
-			})
-			expectedPage = gormpager.Page[TestingModel]{
-				PageSize:    testExpectations.expectedPageSize,
-				CurrentPage: testExpectations.expectedCurrentPage,
-			}
+			expectedPage = createAndGenerateTestingModel(t, db, testExpectations)
 		)
-		db.Create(&savedData)
 
 		if err := expectedPage.SelectPages(pager, db.Where("user_id = ?", testExpectations.expectedUserId)); err != nil {
 			t.Error(err)
@@ -219,20 +168,8 @@ func TestWrapGormDB(t *testing.T) {
 				expectedHasNextPage:  true,
 				expectedUserId:       6,
 			}
-			savedData = sliceGenerator(int(testExpectations.expectedTotalEntries), func() *TestingModel {
-				return &TestingModel{
-					Name:   faker.Name(),
-					Age:    uint(faker.RandomUnixTime()),
-					Hobbie: faker.Name(),
-					UserID: uint(testExpectations.expectedUserId),
-				}
-			})
-			expectedPage = gormpager.Page[TestingModel]{
-				PageSize:    5,
-				CurrentPage: testExpectations.expectedCurrentPage,
-			}
+			expectedPage = createAndGenerateTestingModel(t, db, testExpectations)
 		)
-		db.Create(&savedData)
 
 		if err := expectedPage.SelectPages(pager, db.Where("user_id = ?", testExpectations.expectedUserId)); err != nil {
 			t.Error(err)
@@ -253,25 +190,68 @@ func TestWrapGormDB(t *testing.T) {
 				expectedHasNextPage:  true,
 				expectedUserId:       7,
 			}
-			savedData = sliceGenerator(int(testExpectations.expectedTotalEntries), func() *TestingModel {
-				return &TestingModel{
-					Name:   faker.Name(),
-					Age:    uint(faker.RandomUnixTime()),
-					Hobbie: faker.Name(),
-					UserID: uint(testExpectations.expectedUserId),
-				}
-			})
-			expectedPage = gormpager.Page[TestingModel]{
-				PageSize:    1000,
-				CurrentPage: testExpectations.expectedCurrentPage,
-			}
+			expectedPage = createAndGenerateTestingModel(t, db, testExpectations)
 		)
-		db.Create(&savedData)
 
 		if err := expectedPage.SelectPages(pager, db.Where("user_id = ?", testExpectations.expectedUserId)); err != nil {
 			t.Error(err)
 			t.FailNow()
 		}
+	})
 
+	t.Run("creates a connection with deafult options when options is empty", func(t *testing.T) {
+		var (
+			pagerWithOptions = gormpager.WrapGormDBWithOptions(
+				db,
+				gormpager.Options{},
+			)
+			testExpectations = testingExpects[TestingModel]{
+				expectedTotalEntries: 44,
+				expectedPageSize:     10,
+				expectedLenData:      10,
+				expectedTotalPages:   5,
+				expectedCurrentPage:  1,
+				expectedNextPage:     2,
+				expectedHasNextPage:  true,
+				expectedUserId:       8,
+			}
+			expectedPage = createAndGenerateTestingModel(t, db, testExpectations)
+		)
+
+		if err := expectedPage.SelectPages(pagerWithOptions, db.Where("user_id = ?", testExpectations.expectedUserId)); err != nil {
+			t.Error(err)
+			t.FailNow()
+		}
+
+		validator(t, expectedPage, testExpectations)
+	})
+
+	t.Run("creates a new page with options", func(t *testing.T) {
+		var (
+			pagerWithOptions = gormpager.WrapGormDBWithOptions(
+				db,
+				gormpager.Options{
+					PageSizeLowerLimit: 5,
+				},
+			)
+			testExpectations = testingExpects[TestingModel]{
+				expectedTotalEntries: 44,
+				expectedPageSize:     5,
+				expectedLenData:      5,
+				expectedTotalPages:   9,
+				expectedCurrentPage:  1,
+				expectedNextPage:     2,
+				expectedHasNextPage:  true,
+				expectedUserId:       9,
+			}
+			gotPage = createAndGenerateTestingModel(t, db, testExpectations)
+		)
+
+		if err := gotPage.SelectPages(pagerWithOptions, db.Where("user_id = ?", testExpectations.expectedUserId)); err != nil {
+			t.Error(err)
+			t.FailNow()
+		}
+
+		validator(t, gotPage, testExpectations)
 	})
 }
