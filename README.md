@@ -38,6 +38,8 @@ pager := gormpager.WrapGormDBWithOptions(db, gormpager.Options{
 })
 ```
 
+**Note:** Gormpager has default values for PageSize which are 10 and 100. If you need change this default values you can do it througth this gormpager.WrapGormDBWithOptions so you can request a small page.
+
 Start using it!
 
 ```golang

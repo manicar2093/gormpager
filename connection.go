@@ -22,6 +22,8 @@ func WrapGormDB(conn *gorm.DB) *GormPager {
 	}
 }
 
+// WrapGormDBWithOptions allows you to change PageSize limits. This is important when you want to request small
+// pages that default values does not allow
 func WrapGormDBWithOptions(conn *gorm.DB, options Options) *GormPager {
 	switch {
 	case options.PageSizeLowerLimit == 0:
