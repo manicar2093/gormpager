@@ -3,7 +3,7 @@ module github.com/manicar2093/gormpager
 go 1.20
 
 require (
-	github.com/bxcodec/faker/v3 v3.8.1
+	github.com/bxcodec/faker/v4 v4.0.0-beta.3
 	gorm.io/driver/postgres v1.4.8
 	gorm.io/gorm v1.24.3
 )

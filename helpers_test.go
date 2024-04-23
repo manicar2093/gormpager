@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/bxcodec/faker/v3"
+	"github.com/bxcodec/faker/v4"
 	"github.com/manicar2093/gormpager"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
