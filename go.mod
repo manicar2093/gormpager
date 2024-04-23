@@ -3,7 +3,7 @@ module github.com/manicar2093/gormpager
 go 1.20
 
 require (
-	github.com/bxcodec/faker/v4 v4.0.0-beta.3
+	github.com/go-faker/faker/v4 v4.4.1
 	gorm.io/driver/postgres v1.4.8
 	gorm.io/gorm v1.24.3
 )
@@ -15,5 +15,5 @@ require (
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
 	golang.org/x/crypto v0.14.0 // indirect
-	golang.org/x/text v0.13.0 // indirect
+	golang.org/x/text v0.14.0 // indirect
 )
