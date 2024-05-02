@@ -20,7 +20,7 @@ type (
 	testingExpects[T any] struct {
 		expectedTotalEntries int64
 		expectedPageSize     int64
-		expectedLenData      int64
+		expectedEntriesCount int64
 		expectedTotalPages   int64
 		expectedCurrentPage  int64
 		expectedNextPage     int64
@@ -45,7 +45,7 @@ func TestWrapGormDB(t *testing.T) {
 			testExpectations = testingExpects[TestingModel]{
 				expectedTotalEntries: 44,
 				expectedPageSize:     15,
-				expectedLenData:      15,
+				expectedEntriesCount: 15,
 				expectedTotalPages:   3,
 				expectedCurrentPage:  1,
 				expectedNextPage:     2,
@@ -68,7 +68,7 @@ func TestWrapGormDB(t *testing.T) {
 			testExpectations = testingExpects[TestingModel]{
 				expectedTotalEntries: 2,
 				expectedPageSize:     15,
-				expectedLenData:      2,
+				expectedEntriesCount: 2,
 				expectedTotalPages:   1,
 				expectedCurrentPage:  1,
 				expectedNextPage:     1,
@@ -91,7 +91,7 @@ func TestWrapGormDB(t *testing.T) {
 			testExpectations = testingExpects[TestingModel]{
 				expectedTotalEntries: 0,
 				expectedPageSize:     10,
-				expectedLenData:      0,
+				expectedEntriesCount: 0,
 				expectedTotalPages:   1,
 				expectedCurrentPage:  1,
 				expectedNextPage:     1,
@@ -116,7 +116,7 @@ func TestWrapGormDB(t *testing.T) {
 			testExpectations = testingExpects[TestingModel]{
 				expectedTotalEntries: 2,
 				expectedPageSize:     15,
-				expectedLenData:      2,
+				expectedEntriesCount: 2,
 				expectedTotalPages:   1,
 				expectedCurrentPage:  1,
 				expectedNextPage:     1,
@@ -139,7 +139,7 @@ func TestWrapGormDB(t *testing.T) {
 			testExpectations = testingExpects[TestingModel]{
 				expectedTotalEntries: 55,
 				expectedPageSize:     40,
-				expectedLenData:      40,
+				expectedEntriesCount: 40,
 				expectedTotalPages:   2,
 				expectedCurrentPage:  1,
 				expectedNextPage:     2,
@@ -161,7 +161,7 @@ func TestWrapGormDB(t *testing.T) {
 			testExpectations = testingExpects[TestingModel]{
 				expectedTotalEntries: 55,
 				expectedPageSize:     10,
-				expectedLenData:      40,
+				expectedEntriesCount: 40,
 				expectedTotalPages:   2,
 				expectedCurrentPage:  1,
 				expectedNextPage:     2,
@@ -183,7 +183,7 @@ func TestWrapGormDB(t *testing.T) {
 			testExpectations = testingExpects[TestingModel]{
 				expectedTotalEntries: 55,
 				expectedPageSize:     100,
-				expectedLenData:      40,
+				expectedEntriesCount: 40,
 				expectedTotalPages:   2,
 				expectedCurrentPage:  1,
 				expectedNextPage:     2,
@@ -208,7 +208,7 @@ func TestWrapGormDB(t *testing.T) {
 			testExpectations = testingExpects[TestingModel]{
 				expectedTotalEntries: 44,
 				expectedPageSize:     10,
-				expectedLenData:      10,
+				expectedEntriesCount: 10,
 				expectedTotalPages:   5,
 				expectedCurrentPage:  1,
 				expectedNextPage:     2,
@@ -237,7 +237,7 @@ func TestWrapGormDB(t *testing.T) {
 			testExpectations = testingExpects[TestingModel]{
 				expectedTotalEntries: 44,
 				expectedPageSize:     5,
-				expectedLenData:      5,
+				expectedEntriesCount: 5,
 				expectedTotalPages:   9,
 				expectedCurrentPage:  1,
 				expectedNextPage:     2,
@@ -248,6 +248,40 @@ func TestWrapGormDB(t *testing.T) {
 		)
 
 		if err := gotPage.SelectPages(pagerWithOptions, db.Where("user_id = ?", testExpectations.expectedUserId)); err != nil {
+			t.Error(err)
+			t.FailNow()
+		}
+
+		validator(t, gotPage, testExpectations)
+	})
+
+	t.Run("create pagination with raw query", func(t *testing.T) {
+		var (
+			pagerWithOptions = gormpager.WrapGormDBWithOptions(
+				db,
+				gormpager.Options{
+					PageSizeLowerLimit: 5,
+				},
+			)
+			expectedUserId   = int64(10)
+			testExpectations = testingExpects[TestingModel]{
+				expectedTotalEntries: 44,
+				expectedPageSize:     5,
+				expectedEntriesCount: 5,
+				expectedTotalPages:   9,
+				expectedCurrentPage:  1,
+				expectedNextPage:     2,
+				expectedHasNextPage:  true,
+				expectedUserId:       expectedUserId,
+			}
+			gotPage = createAndGenerateTestingModel(t, db, testExpectations)
+		)
+
+		if err := gotPage.SelectPagesRaw(
+			pagerWithOptions,
+			gormpager.RawQuery("SELECT COUNT(*) FROM testing_models WHERE user_id=?", expectedUserId),
+			gormpager.RawQuery("SELECT * FROM testing_models WHERE user_id=?", expectedUserId),
+		); err != nil {
 			t.Error(err)
 			t.FailNow()
 		}

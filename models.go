@@ -1,5 +1,7 @@
 package gormpager
 
+import "fmt"
+
 type (
 	Options struct {
 		PageSizeUpperLimit uint
@@ -23,4 +25,21 @@ type (
 		// Data is what was found in db
 		Data []T `json:"data"`
 	}
+
+	rawQuery struct {
+		sql  string
+		vars []interface{}
+	}
 )
+
+func RawQuery(sql string, vars ...interface{}) *rawQuery {
+	return &rawQuery{
+		sql,
+		vars,
+	}
+}
+
+func (c *rawQuery) setOffsetLimit(offset, limit int) {
+	c.sql = fmt.Sprintf("%s OFFSET ? LIMIT ?;", c.sql)
+	c.vars = append(c.vars, offset, limit)
+}
