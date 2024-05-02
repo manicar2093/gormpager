@@ -1,3 +1,9 @@
+## v0.3.1 (2024-05-02)
+
+### Fix
+
+- add limit and offset correctly for raw queries
+
 ## v0.3.0 (2024-04-23)
 
 ### Feat
