@@ -1,11 +1,13 @@
 module github.com/manicar2093/gormpager
 
-go 1.21
+go 1.23.0
+
+toolchain go1.23.3
 
 require (
 	github.com/go-faker/faker/v4 v4.4.1
 	gorm.io/driver/postgres v1.5.7
-	gorm.io/gorm v1.25.10
+	gorm.io/gorm v1.25.12
 )
 
 require (
@@ -15,5 +17,5 @@ require (
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
 	golang.org/x/crypto v0.14.0 // indirect
-	golang.org/x/text v0.15.0 // indirect
+	golang.org/x/text v0.23.0 // indirect
 )

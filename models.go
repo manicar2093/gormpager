@@ -11,7 +11,7 @@ type (
 	Page[T any] struct {
 		// CurrentPage is which page I am in
 		CurrentPage int64 `json:"current_page"`
-		// PageSize is how many items can I expect in Data
+		// PageSize is how many items can I expect in Items
 		PageSize int64 `json:"page_size"`
 		// TotalEntries indicates how many data exists
 		TotalEntries int64 `json:"total_entries"`
@@ -22,8 +22,8 @@ type (
 		NextPage int64 `json:"next_page"`
 		// EntriesCount indicates how many data the current page contains
 		EntriesCount int64 `json:"entries_count"`
-		// Data is what was found in db
-		Data []T `json:"data"`
+		// Items are what was found in db
+		Items []T `json:"item"`
 	}
 
 	rawQuery struct {
