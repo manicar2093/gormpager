@@ -18,7 +18,7 @@ func (c *Page[T]) SelectPages(pager *GormPager, query *gorm.DB) error {
 	if res := query.Model(&model).Scopes(func(db *gorm.DB) *gorm.DB {
 		offset := c.getOffset()
 		return db.Offset(offset).Limit(int(c.PageSize))
-	}).Find(&c.Data); res.Error != nil {
+	}).Find(&c.Items); res.Error != nil {
 		return res.Error
 	}
 
@@ -39,7 +39,7 @@ func (c *Page[T]) SelectPagesRaw(pager *GormPager, countRawQuery, rawQuery *rawQ
 
 	rawQuery.setOffsetLimit(c.getOffset(), int(c.PageSize))
 
-	if res := pager.Raw(rawQuery.sql, rawQuery.vars...).Scan(&c.Data); res.Error != nil {
+	if res := pager.Raw(rawQuery.sql, rawQuery.vars...).Scan(&c.Items); res.Error != nil {
 		return res.Error
 	}
 
@@ -90,7 +90,7 @@ func (c *Page[T]) checkPageCanBeCreated() error {
 
 func (c *Page[T]) setNextPageAndEntriesCount() {
 	calculateNextPage := func() {
-		if len(c.Data) == 0 {
+		if len(c.Items) == 0 {
 			c.NextPage = 1
 			return
 		}
@@ -101,7 +101,7 @@ func (c *Page[T]) setNextPageAndEntriesCount() {
 		c.NextPage = c.CurrentPage + 1
 	}
 	setEntriesCount := func() {
-		c.EntriesCount = int64(len(c.Data))
+		c.EntriesCount = int64(len(c.Items))
 	}
 
 	calculateNextPage()

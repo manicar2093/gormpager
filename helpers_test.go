@@ -66,8 +66,8 @@ func validator[T any](t *testing.T, gotPage gormpager.Page[T], testExpectations 
 		failer("unexpected total entries", testExpectations.expectedTotalEntries, gotPage.TotalEntries)
 	case gotPage.PageSize != testExpectations.expectedPageSize:
 		failer("unexpected page size", testExpectations.expectedPageSize, gotPage.PageSize)
-	case len(gotPage.Data) != int(testExpectations.expectedEntriesCount):
-		failer("unexpected data len", testExpectations.expectedEntriesCount, len(gotPage.Data))
+	case len(gotPage.Items) != int(testExpectations.expectedEntriesCount):
+		failer("unexpected data len", testExpectations.expectedEntriesCount, len(gotPage.Items))
 	case gotPage.NextPage != testExpectations.expectedNextPage:
 		failer("unexpected next page", testExpectations.expectedNextPage, gotPage.NextPage)
 	case gotPage.HasNextPage() != testExpectations.expectedHasNextPage:
