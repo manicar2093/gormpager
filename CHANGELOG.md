@@ -1,3 +1,9 @@
+## v0.5.0 (2025-03-13)
+
+### Feat
+
+- change data to items to improve readability
+
 ## v0.4.0 (2024-05-22)
 
 ### Feat
