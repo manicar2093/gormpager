@@ -23,7 +23,7 @@ type (
 		// EntriesCount indicates how many data the current page contains
 		EntriesCount int64 `json:"entries_count"`
 		// Items are what was found in db
-		Items []T `json:"item"`
+		Items []T `json:"items"`
 	}
 
 	rawQuery struct {
